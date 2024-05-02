@@ -6,8 +6,7 @@ namespace SignInSign
     public class Configuration
     {
         public static string ConfigPath = Path.Combine(TShock.SavePath, "SignInSignConfig.json");
-        public string SignText = "Please type in your password below the line. \n------------------------------------------\n";
-        public int SignID = -1;
+        public string SignText = "Please type in your password below the line. \n-------------------------------------------------\n";
 
         public static Configuration Reload()
         {

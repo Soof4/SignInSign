@@ -11,12 +11,13 @@ namespace SignInSign {
         public override string Name => "SignInSign";
         public override string Description => "Sign in sign!";
         public override string Author => "Soofa";
-        public override Version Version => new Version(0, 0, 1);
+        public override Version Version => new Version(0, 1, 0);
         
         #endregion
 
         public static Configuration Config = Configuration.Reload();
         public SignInSign(Main game) : base(game) { }
+        public static int SignID = -1;
 
         public override void Initialize()
         {

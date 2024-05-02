@@ -19,9 +19,17 @@ namespace SignInSign
             Main.tile[Main.spawnTileX + 1, Main.spawnTileY - 3].wall = WallID.EchoWall;
             Main.tile[Main.spawnTileX + 1, Main.spawnTileY - 2].wall = WallID.EchoWall;
 
-            //Main.tile[Main.spawnTileX, Main.spawnTileY - 3].type = TileID.Signs;
+            Main.tile[Main.spawnTileX, Main.spawnTileY - 3].active(false);
+            Main.tile[Main.spawnTileX, Main.spawnTileY - 2].active(false);
+            Main.tile[Main.spawnTileX + 1, Main.spawnTileY - 3].active(false);
+            Main.tile[Main.spawnTileX + 1, Main.spawnTileY - 2].active(false);
 
-            WorldGen.Place2x2(Main.spawnTileX, Main.spawnTileY - 3, TileID.Signs, 0);
+            Main.tile[Main.spawnTileX, Main.spawnTileY - 3].UseBlockColors(new TileColorCache() { Invisible = true });
+            Main.tile[Main.spawnTileX, Main.spawnTileY - 2].UseBlockColors(new TileColorCache() { Invisible = true });
+            Main.tile[Main.spawnTileX + 1, Main.spawnTileY - 3].UseBlockColors(new TileColorCache() { Invisible = true });
+            Main.tile[Main.spawnTileX + 1, Main.spawnTileY - 2].UseBlockColors(new TileColorCache() { Invisible = true });
+
+            WorldGen.PlaceSign(Main.spawnTileX, Main.spawnTileY - 3, TileID.Signs, 4);
 
             // Find an empty sign ID
             int newSignID = -1;
@@ -42,10 +50,9 @@ namespace SignInSign
             Main.sign[newSignID].x = Main.spawnTileX;
             Main.sign[newSignID].y = Main.spawnTileY - 3;
 
-            // Save the sign ID
-            args.Player.SendInfoMessage($"Sign ID: {newSignID}");
-            SignInSign.Config.SignID = newSignID;
-            SignInSign.Config.Write();
+            // Save the world and send tile rectangle
+            TShockAPI.Commands.HandleCommand(TSPlayer.Server, "/save");
+            TSPlayer.All.SendTileRect((short)Main.spawnTileX, (short)(Main.spawnTileY - 3), 2, 2);
         }
     }
 }

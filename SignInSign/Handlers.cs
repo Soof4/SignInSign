@@ -1,6 +1,7 @@
 using System.IO.Streams;
 using TerrariaApi.Server;
 using TShockAPI;
+using Terraria;
 
 namespace SignInSign
 {
@@ -9,28 +10,39 @@ namespace SignInSign
         public static void InitializeHandlers(TerrariaPlugin registrator)
         {
             ServerApi.Hooks.NetGreetPlayer.Register(registrator, OnNetGreetPlayer);
+            ServerApi.Hooks.GamePostInitialize.Register(registrator, OnGamePostInitialize);
 
             GetDataHandlers.Sign += OnSignChange;
-            GetDataHandlers.SignRead += OnSignRead;
+
+        }
+
+        private static void OnGamePostInitialize(EventArgs args)
+        {
+            SignInSign.SignID = Utils.GetSignIdByPos(Main.spawnTileX, Main.spawnTileY - 3);
+
+            Console.WriteLine($"SignID: {SignInSign.SignID}");
+
+            if (SignInSign.SignID == -1) TShockAPI.Commands.HandleCommand(TSPlayer.Server, "/setupsign");
+            
         }
 
         public static void DisposeHandlers(TerrariaPlugin deregistrator)
         {
             ServerApi.Hooks.NetGreetPlayer.Deregister(deregistrator, OnNetGreetPlayer);
+            ServerApi.Hooks.GamePostInitialize.Register(deregistrator, OnGamePostInitialize);
 
             GetDataHandlers.Sign -= OnSignChange;
-            GetDataHandlers.SignRead -= OnSignRead;
         }
+
 
         public static void OnNetGreetPlayer(GreetPlayerEventArgs args)
         {
             if (TShock.Players[args.Who].IsLoggedIn) return;
-            TShock.Players[args.Who].SendData(PacketTypes.SignNew, number: SignInSign.Config.SignID);
+            TShock.Players[args.Who].SendData(PacketTypes.SignNew, number: SignInSign.SignID);
         }
+
         public static void OnSignChange(object? sender, GetDataHandlers.SignEventArgs args)
         {
-            if (args.Handled) return;
-
             // Reading the data
             args.Data.Seek(0, SeekOrigin.Begin);
             int signId = args.Data.ReadInt16();
@@ -38,28 +50,25 @@ namespace SignInSign
             int posY = args.Data.ReadInt16();
             string newText = args.Data.ReadString();
 
-            if (signId != SignInSign.Config.SignID) return;
+            Console.WriteLine($"SignInSign.SignID: {SignInSign.SignID}\nsignId{signId}");
+
+            if (signId != SignInSign.SignID) return;
 
             string password = Utils.ReadPassword(newText);
 
-            TShockAPI.Commands.HandleCommand(args.Player, $"/register {password}");
+            if (TShock.UserAccounts.GetUserAccountByName(args.Player.Name) == null)
+            {
+                TShockAPI.Commands.HandleCommand(args.Player, $"/register {password}");
+            }
+            else
+            {
+                TShockAPI.Commands.HandleCommand(args.Player, $"/login {password}");
+            }
 
-            TSPlayer.All.SendData(PacketTypes.SignNew, number: signId);;
+            Main.sign[signId].text = SignInSign.Config.SignText;
+            TSPlayer.All.SendData(PacketTypes.SignNew, number: signId);
 
             args.Handled = true;
         }
-
-        public static void OnSignRead(object? sender, GetDataHandlers.SignReadEventArgs args)
-        {
-            // Read the data
-            args.Data.Seek(0, SeekOrigin.Begin);
-            int posX = args.Data.ReadInt16();
-            int posY = args.Data.ReadInt16();
-            int signID = Utils.GetSignIdByPos(posX, posY);
-
-
-        }
-
     }
-
 }
