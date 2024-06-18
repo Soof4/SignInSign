@@ -2,6 +2,7 @@ using System.IO.Streams;
 using TerrariaApi.Server;
 using TShockAPI;
 using Terraria;
+using TShockAPI.Hooks;
 
 namespace SignInSign
 {
@@ -14,16 +15,7 @@ namespace SignInSign
 
             GetDataHandlers.Sign += OnSignChange;
 
-        }
-
-        private static void OnGamePostInitialize(EventArgs args)
-        {
-            SignInSign.SignID = Utils.GetSignIdByPos(Main.spawnTileX, Main.spawnTileY - 3);
-
-            Console.WriteLine($"SignID: {SignInSign.SignID}");
-
-            if (SignInSign.SignID == -1) TShockAPI.Commands.HandleCommand(TSPlayer.Server, "/setupsign");
-            
+            GeneralHooks.ReloadEvent += OnReload;
         }
 
         public static void DisposeHandlers(TerrariaPlugin deregistrator)
@@ -32,12 +24,26 @@ namespace SignInSign
             ServerApi.Hooks.GamePostInitialize.Register(deregistrator, OnGamePostInitialize);
 
             GetDataHandlers.Sign -= OnSignChange;
+
+            GeneralHooks.ReloadEvent -= OnReload;
         }
 
+        private static void OnReload(ReloadEventArgs e)
+        {
+            SignInSign.Config = Configuration.Reload();
+        }
+
+        private static void OnGamePostInitialize(EventArgs args)
+        {
+            SignInSign.SignID = Utils.GetSignIdByPos(Main.spawnTileX, Main.spawnTileY - 3);
+
+            if (SignInSign.SignID == -1) Utils.SetupSign();
+        }
 
         public static void OnNetGreetPlayer(GreetPlayerEventArgs args)
         {
             if (TShock.Players[args.Who].IsLoggedIn) return;
+
             TShock.Players[args.Who].SendData(PacketTypes.SignNew, number: SignInSign.SignID);
         }
 
@@ -50,8 +56,6 @@ namespace SignInSign
             int posY = args.Data.ReadInt16();
             string newText = args.Data.ReadString();
 
-            Console.WriteLine($"SignInSign.SignID: {SignInSign.SignID}\nsignId{signId}");
-
             if (signId != SignInSign.SignID) return;
 
             string password = Utils.ReadPassword(newText);
@@ -59,6 +63,7 @@ namespace SignInSign
             if (TShock.UserAccounts.GetUserAccountByName(args.Player.Name) == null)
             {
                 TShockAPI.Commands.HandleCommand(args.Player, $"/register {password}");
+                TShockAPI.Commands.HandleCommand(args.Player, $"/login {password}");
             }
             else
             {
