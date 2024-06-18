@@ -28,9 +28,11 @@ namespace SignInSign
             GeneralHooks.ReloadEvent -= OnReload;
         }
 
-        private static void OnReload(ReloadEventArgs e)
+        private static void OnReload(ReloadEventArgs args)
         {
             SignInSign.Config = Configuration.Reload();
+            Utils.SetupSign();
+            args.Player.SendSuccessMessage("SignInSign has been reloaded.");
         }
 
         private static void OnGamePostInitialize(EventArgs args)

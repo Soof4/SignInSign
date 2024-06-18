@@ -11,7 +11,7 @@ namespace SignInSign {
         public override string Name => "SignInSign";
         public override string Description => "Sign in sign!";
         public override string Author => "Soofa";
-        public override Version Version => new Version(0, 1, 1);
+        public override Version Version => new Version(1, 0, 0);
         
         #endregion
 
